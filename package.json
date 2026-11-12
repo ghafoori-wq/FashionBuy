@@ -1,0 +1,24 @@
+{
+  "name": "fashionbuy-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FashionBuy - luxury fashion-tech studio (3D atelier, AI stylist, FreeSewing patterns)",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.cjs"
+  },
+  "dependencies": {
+    "@freesewing/aaron": "4.10.2",
+    "@freesewing/bella": "4.10.2",
+    "@freesewing/bent": "4.10.2",
+    "@freesewing/brian": "4.10.2",
+    "@freesewing/carlita": "4.10.2",
+    "@freesewing/config": "4.10.2",
+    "@freesewing/core": "4.10.2",
+    "@freesewing/plugin-theme": "4.10.2",
+    "@freesewing/plugin-transform": "4.10.2",
+    "@freesewing/simon": "4.10.2",
+    "@freesewing/titan": "4.10.2",
+    "@freesewing/waralee": "4.10.2"
+  }
+}

@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FashionBuy — Luxury Fashion-Tech Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --glass: rgba(15, 11, 28, 0.82);
+            --glass-soft: rgba(15, 11, 28, 0.68);
+            --hairline-gold: rgba(212, 175, 55, 0.25);
+            --hairline-violet: rgba(109, 40, 217, 0.28);
+            --gold: #d4af37;
+            --gold-soft: #e6d8a8;
+            --violet: #a78bfa;
+            --ink: #ece8f4;
+            --ink-dim: #9a92b8;
+            --accent: #38bdf8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Jost', 'Segoe UI', sans-serif; }
+        body { overflow: hidden; background: #0c0814; color: var(--ink); }
+        canvas { display: block; width: 100vw; height: 100vh; }
+
+        /* ---- Visible caret in every text field (editorial cool-blue) ---- */
+        input, textarea { caret-color: #38bdf8; }
+        input::placeholder, textarea::placeholder { color: #6f6690; }
+
+        /* ---- Refined scrollbars (charcoal track + champagne thumb) ---- */
+        ::-webkit-scrollbar { width: 7px; height: 7px; }
+        ::-webkit-scrollbar-track { background: rgba(12, 8, 20, 0.6); border-radius: 8px; }
+        ::-webkit-scrollbar-thumb { border-radius: 8px; background: rgba(212, 175, 55, 0.35); border: 1px solid rgba(212, 175, 55, 0.15); }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(212, 175, 55, 0.55); }
+        ::-webkit-scrollbar-corner { background: transparent; }
+        * { scrollbar-color: rgba(212, 175, 55, 0.35) rgba(12, 8, 20, 0.6); scrollbar-width: thin; }
+
+        /* ---- Editorial glassmorphism: dark frosted panels, hairline gold/violet borders ---- */
+        #right-panel, #sketcher-panel, #left-panel {
+            background: var(--glass);
+            backdrop-filter: blur(18px) saturate(140%);
+            -webkit-backdrop-filter: blur(18px) saturate(140%);
+            border-radius: 16px;
+            border: 1px solid var(--hairline-gold);
+            box-shadow: 0 24px 60px rgba(4, 2, 10, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            z-index: 10;
+        }
+        #right-panel, #sketcher-panel { border-color: var(--hairline-violet); }
+        #right-panel::before, #sketcher-panel::before {
+            content: ''; display: block; height: 1px; margin: -4px 0 12px;
+            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.55), transparent);
+        }
+
+        /* ---- Top Studio Header Bar (HUD) ---- */
+        #studio-header {
+            position: fixed; top: 0; left: 0; right: 0; height: 60px; z-index: 18;
+            display: flex; align-items: center; padding: 0 26px;
+            background: rgba(15, 11, 28, 0.82);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-bottom: 1px solid var(--hairline-gold);
+            pointer-events: none;
+        }
+        #studio-header .hb-left { display: flex; align-items: center; gap: 14px; }
+        .hb-diamond {
+            width: 11px; height: 11px; transform: rotate(45deg);
+            background: linear-gradient(135deg, var(--gold), #f3e6bb);
+            border-radius: 1px;
+        }
+        .hb-title { color: var(--ink); font-family: 'Cormorant Garamond', serif; font-size: 22px;
+            font-weight: 600; letter-spacing: 0.3em; }
+        .hb-sub { color: var(--ink-dim); font-size: 9px; letter-spacing: 0.42em; font-weight: 500; margin-top: 2px; }
+        .hb-stack { display: flex; flex-direction: column; }
+
+        /* Splash overlay — auto-hides via CSS so the room is visible immediately */
+        #overlay {
+            position: fixed; inset: 0; z-index: 20;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(12, 8, 20, 0.96); pointer-events: none;
+            animation: splashHide 0.9s ease 0.4s forwards;
+        }
+        #overlay h1 { color: var(--gold-soft); font-family: 'Cormorant Garamond', serif; letter-spacing: 0.4em;
+            font-size: 30px; font-weight: 600; margin-bottom: 1rem; }
+        #overlay p { color: var(--ink-dim); letter-spacing: 0.3em; font-size: 11px; }
+        @keyframes splashHide { to { opacity: 0; visibility: hidden; } }
+
+        /* Left panel: AI Styling Profile — pinned to the far LEFT edge */
+        #left-panel {
+            position: absolute; top: 76px; left: 20px; width: 285px; max-height: calc(94vh - 58px); overflow-y: auto;
+            padding: 18px; z-index: 10;
+        }
+        h3 { color: var(--gold-soft); font-size: 11px; font-weight: 600; margin-bottom: 12px;
+            text-transform: uppercase; letter-spacing: 0.28em; }
+        .row { display: flex; gap: 8px; margin-bottom: 10px; }
+        .field { flex: 1; display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+        label { font-size: 9px; color: var(--ink-dim); letter-spacing: 0.18em; font-weight: 500; }
+        input, select {
+            background: rgba(255, 255, 255, 0.04); border: 1px solid var(--hairline-violet); color: var(--ink);
+            padding: 7px 9px; border-radius: 8px; font-size: 12px; width: 100%; transition: border-color .2s;
+        }
+        input:focus, select:focus { outline: none; border-color: rgba(212, 175, 55, 0.6); }
+        .pulse-glow { animation: pulse 1.4s infinite; border-color: var(--gold) !important; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 rgba(212,175,55,0); }
+            50% { box-shadow: 0 0 18px rgba(212,175,55,0.35); }
+            100% { box-shadow: 0 0 0 rgba(212,175,55,0); }
+        }
+        #mirror-card img { border-radius: 10px; }
+        #ai-critique .score-line { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 700;
+            color: var(--gold-soft); margin: 4px 0; }
+        #ai-critique .crit-block { background: rgba(255,255,255,0.035); border-left: 2px solid var(--gold);
+            padding: 8px 10px; border-radius: 6px; margin-top: 8px; }
+        #ai-critique .crit-block b { color: var(--gold-soft); text-transform: uppercase; font-size: 9px; letter-spacing: 0.2em; }
+        #ai-critique .err { color: #e2a4c4; }
+        .spin { display:inline-block; width:13px; height:13px; border:2px solid var(--gold); border-top-color:transparent;
+            border-radius:50%; animation: rot 0.8s linear infinite; vertical-align:-2px; }
+        @keyframes rot { to { transform: rotate(360deg); } }
+
+        .upload-box {
+            border: 1px dashed rgba(212, 175, 55, 0.4); padding: 12px; text-align: center;
+            border-radius: 10px; font-size: 10px; letter-spacing: 0.14em; color: var(--gold-soft); cursor: pointer; margin-top: 10px;
+        }
+        .upload-box:hover { background: rgba(212, 175, 55, 0.06); }
+
+        /* Board action buttons + Back to Avatars + tooltip */
+        #board-actions {
+            position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%);
+            display: none; gap: 12px; z-index: 12;
+        }
+        #board-actions.visible { display: flex; }
+        #back-to-avatars {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            display: none; z-index: 12;
+        }
+        #back-to-avatars.visible { display: block; }
+        .tip-btn { position: relative; }
+        .tip-btn::after {
+            content: attr(data-tip);
+            position: absolute; bottom: calc(100% + 10px); left: 50%;
+            transform: translateX(-50%);
+            background: var(--glass); border: 1px solid var(--hairline-gold);
+            color: var(--ink); font-size: 11px; font-weight: 300; letter-spacing: 0.3px;
+            padding: 9px 13px; border-radius: 10px; width: max-content; max-width: 280px;
+            text-align: center; opacity: 0; pointer-events: none;
+            transition: opacity 0.2s; backdrop-filter: blur(14px);
+            z-index: 20;
+        }
+        .tip-btn:hover::after { opacity: 1; }
+        #card-tip {
+            position: fixed; z-index: 15; display: none; pointer-events: none;
+            background: var(--glass); border: 1px solid var(--hairline-gold);
+            color: var(--ink); padding: 7px 11px; border-radius: 10px; font-size: 12px;
+        }
+
+        /* Right panel: stylist & sketcher — pinned to the far RIGHT edge */
+        #right-panel {
+            position: absolute; top: 76px; right: 20px; width: 310px;
+            max-height: 44vh; overflow-y: auto; padding: 18px; z-index: 10;
+        }
+        #sketcher-panel {
+            position: absolute; top: 76px; right: 20px; width: 310px;
+            margin-top: calc(44vh + 16px);
+            max-height: 48vh; overflow-y: auto; padding: 18px; z-index: 10;
+        }
+        #sketcher-panel h3 {
+            color: var(--violet);
+            border-bottom: 1px solid var(--hairline-violet); padding-bottom: 8px;
+        }
+        #sketcher-badge {
+            display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0;
+            background: rgba(255,255,255,0.03); border: 1px solid var(--hairline-violet);
+            border-radius: 8px; padding: 6px;
+        }
+        #sketcher-badge span {
+            font-size: 9px; color: var(--gold-soft); background: rgba(212,175,55,0.07);
+            border: 1px solid var(--hairline-gold); border-radius: 10px; padding: 2px 8px;
+            letter-spacing: 0.12em;
+        }
+        #sketcher-badge .live-dot { background: var(--gold); border-radius: 50%; width: 6px; height: 6px;
+            display: inline-block; animation: pulse 1.4s infinite; }
+        #sketcher-prompt {
+            width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--hairline-violet); color: var(--ink);
+            padding: 9px 11px; border-radius: 8px; font-size: 12px; min-height: 56px; resize: vertical;
+        }
+        #sketcher-prompt:focus { outline: none; border-color: rgba(212, 175, 55, 0.6); }
+        #sketcher-generate {
+            width: 100%; margin-top: 10px; padding: 11px; border: 1px solid var(--hairline-gold); border-radius: 9px;
+            font-weight: 600; font-size: 12px; letter-spacing: 0.24em; text-transform: uppercase; cursor: pointer;
+            color: #14101e; background: linear-gradient(90deg, var(--gold), #e9d9a4);
+            transition: 0.25s;
+        }
+        #sketcher-generate:hover { box-shadow: 0 6px 22px rgba(212,175,55,0.35); transform: translateY(-1px); }
+        #sketcher-result { margin-top: 10px; font-size: 12px; color: var(--ink); font-weight: 300; }
+        #sketcher-result img {
+            width: 100%; border-radius: 10px; display: block; margin: 6px 0;
+            border: 1px solid var(--hairline-gold);
+        }
+        #sketcher-result .q { background: rgba(255,255,255,0.035); border-left: 2px solid var(--gold);
+            padding: 7px 10px; border-radius: 6px; margin-top: 7px; color: var(--gold-soft); }
+        #sketcher-actions { display: none; flex-direction: column; gap: 5px; margin-top: 8px; }
+        #sketcher-actions.visible { display: flex; }
+        #sketcher-actions button {
+            padding: 8px; border: 1px solid var(--hairline-violet); border-radius: 8px; font-size: 11px;
+            font-weight: 500; cursor: pointer; color: var(--ink); background: rgba(255,255,255,0.03);
+            transition: 0.2s;
+        }
+        #sketcher-actions button:hover { background: rgba(255,255,255,0.08); }
+        #sketcher-actions button:nth-child(2) { border-color: var(--hairline-gold); color: var(--gold-soft); }
+        #sketcher-actions button:nth-child(3) { border-color: var(--hairline-gold); color: var(--gold-soft); }
+
+        .chat-box { height: 110px; overflow-y: auto; background: rgba(255,255,255,0.03); padding: 9px;
+            border-radius: 9px; font-size: 12px; margin-bottom: 8px; border: 1px solid rgba(109,40,217,0.16); }
+        .chat-row { display: flex; gap: 6px; }
+        #chat-input {
+            background: rgba(255,255,255,0.04); border: 1px solid var(--hairline-violet); color: var(--ink);
+            padding: 8px 10px; border-radius: 8px; font-size: 12px; flex: 1; min-width: 0;
+        }
+        #chat-input:focus { outline: none; border-color: rgba(212, 175, 55, 0.6); }
+        #chat-send {
+            padding: 8px 13px; border: none; border-radius: 8px; font-weight: 600; font-size: 11px;
+            letter-spacing: 0.08em; cursor: pointer; color: #14101e; white-space: nowrap;
+            background: linear-gradient(90deg, var(--gold), #e9d9a4); transition: 0.2s;
+        }
+        #chat-send:hover { box-shadow: 0 4px 16px rgba(212,175,55,0.4); transform: translateY(-1px); }
+        .chat-msg { margin-bottom: 6px; line-height: 1.45; }
+        .chat-msg.user { color: var(--gold-soft); }
+        .chat-msg.ai { color: #cfc9e2; }
+        .product-card {
+            border: 1px solid var(--hairline-gold); border-radius: 10px; padding: 9px; margin-top: 6px;
+            background: rgba(255,255,255,0.03);
+        }
+        .product-card img { width: 100%; border-radius: 8px; display: block; }
+        .product-card .p-name { font-weight: 600; color: var(--ink); margin-top: 6px; }
+        .product-card .p-price { color: var(--gold-soft); font-weight: 700; }
+        .product-card .p-store { color: var(--ink-dim); font-size: 10px; }
+        .product-card .p-actions { display: flex; flex-direction: column; gap: 4px; margin-top: 7px; }
+        .product-card .p-actions button {
+            padding: 6px; border: 1px solid var(--hairline-violet); border-radius: 6px; font-size: 10px; font-weight: 600;
+            cursor: pointer; color: var(--ink); background: rgba(255,255,255,0.04);
+        }
+        .p-3d { }
+        .p-fit { border-color: var(--hairline-gold) !important; color: var(--gold-soft) !important; }
+        .p-sew { border-color: var(--hairline-gold) !important; color: var(--gold-soft) !important; }
+        .p-buy { background: #1b3f66 !important; border: none !important; color: #fff !important; }
+        .btn {
+            width: 100%; padding: 9px; border: 1px solid var(--hairline-violet); border-radius: 9px; font-weight: 600;
+            cursor: pointer; margin-top: 6px; font-size: 12px; transition: 0.2s;
+            color: var(--ink); background: rgba(255,255,255,0.04);
+        }
+        .btn:hover { background: rgba(255,255,255,0.09); }
+        .btn-purple { border-color: var(--hairline-gold); color: var(--gold-soft); }
+        .btn-gold { border-color: var(--hairline-gold); color: var(--gold-soft); }
+
+        /* Large PayPal buttons — bottom of the 3D board */
+        #paypal-bar {
+            position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+            display: none; gap: 20px; z-index: 12;
+        }
+        #paypal-bar.visible { display: flex; }
+        .btn-paypal, .btn-paylater {
+            padding: 16px 42px; font-size: 16px; border-radius: 30px; margin-top: 0;
+            letter-spacing: 0.06em; border: none;
+        }
+        .btn-paypal { background: #1b3f66; color: #fff; box-shadow: 0 8px 30px rgba(4,2,10,0.6); }
+        .btn-paypal:hover { background: #142f4e; }
+        .btn-paylater { background: #f4f1ea; color: #1b3f66; }
+        .btn-paylater:hover { background: #ffffff; }
+
+        /* ---- Mock PayPal checkout window (demo mode) ---- */
+        #paypal-modal {
+            position: fixed; inset: 0; z-index: 60; display: none;
+            align-items: center; justify-content: center;
+            background: rgba(6, 4, 12, 0.72); backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+        }
+        #paypal-modal.open { display: flex; animation: ppFade 0.2s ease; }
+        @keyframes ppFade { from { opacity: 0; } to { opacity: 1; } }
+        #pp-dialog {
+            width: min(430px, 92vw); max-height: 92vh; overflow-y: auto;
+            background: #ffffff; color: #001435; border-radius: 14px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            animation: ppRise 0.25s ease;
+        }
+        @keyframes ppRise { from { transform: translateY(14px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
+        #pp-head {
+            display: flex; align-items: center; gap: 10px;
+            padding: 16px 18px; border-bottom: 1px solid #e6e9ee;
+        }
+        #pp-logo { font-size: 19px; font-weight: 800; letter-spacing: -0.5px; color: #003087; font-style: italic; }
+        #pp-logo .pp-mark {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 20px; height: 20px; margin-right: 3px; border-radius: 4px;
+            background: linear-gradient(135deg, #003087, #009cde); color: #fff;
+            font-style: normal; font-size: 13px; font-weight: 800; vertical-align: -2px;
+        }
+        #pp-logo .pp-pal { color: #009cde; }
+        #pp-demo-tag {
+            font-size: 9px; font-weight: 700; letter-spacing: 0.12em; color: #7a6a1d;
+            background: #fdf3cf; border: 1px solid #ecd98a; border-radius: 6px; padding: 3px 7px;
+        }
+        #pp-close {
+            margin-left: auto; width: 30px; height: 30px; border: none; border-radius: 50%;
+            background: #f2f4f7; color: #5a6472; font-size: 20px; line-height: 1; cursor: pointer;
+        }
+        #pp-close:hover { background: #e6e9ee; color: #001435; }
+        #pp-body { padding: 18px; }
+        #pp-item { display: flex; gap: 12px; align-items: flex-start; padding-bottom: 14px; border-bottom: 1px solid #e6e9ee; }
+        #pp-item-img {
+            width: 64px; height: 78px; border-radius: 8px; overflow: hidden; flex: none;
+            background: linear-gradient(160deg, #eef2f7, #dde4ee);
+        }
+        #pp-item-img img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        #pp-item-info { flex: 1; min-width: 0; }
+        #pp-item-name { font-size: 14px; font-weight: 700; line-height: 1.3; }
+        #pp-item-sub { font-size: 11px; color: #6b7583; margin-top: 3px; line-height: 1.4; }
+        #pp-item-mode { font-size: 11px; color: #0070ba; font-weight: 600; margin-top: 6px; }
+        #pp-item-price { font-size: 15px; font-weight: 700; white-space: nowrap; }
+        #pp-totals { padding: 12px 0; border-bottom: 1px solid #e6e9ee; }
+        #pp-totals .pp-row { display: flex; justify-content: space-between; font-size: 12px; color: #4a5462; padding: 3px 0; }
+        #pp-totals .pp-total { font-size: 15px; font-weight: 700; color: #001435; margin-top: 6px; padding-top: 8px; border-top: 1px dashed #d7dce3; }
+        #pp-payer { display: flex; align-items: center; gap: 10px; padding: 14px 0; }
+        #pp-payer .pp-avatar {
+            width: 34px; height: 34px; border-radius: 50%; flex: none;
+            background: linear-gradient(135deg, #6d28d9, #a78bfa); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 700;
+        }
+        #pp-payer-name { font-size: 12px; font-weight: 700; }
+        #pp-payer-mail { font-size: 11px; color: #6b7583; }
+        #pp-payer .pp-badge {
+            margin-left: auto; font-size: 10px; font-weight: 600; color: #0070ba;
+            background: #eaf3fb; border-radius: 10px; padding: 4px 9px; white-space: nowrap;
+        }
+        #pp-pay {
+            width: 100%; padding: 13px; border: none; border-radius: 24px; cursor: pointer;
+            background: #0070ba; color: #fff; font-size: 15px; font-weight: 700;
+            letter-spacing: 0.02em; transition: background 0.2s, transform 0.2s;
+        }
+        #pp-pay:hover:not(:disabled) { background: #005ea6; transform: translateY(-1px); }
+        #pp-pay:disabled { background: #8db4d4; cursor: wait; }
+        #pp-secure { text-align: center; font-size: 10px; color: #8a93a0; margin-top: 10px; }
+        #pp-success { display: none; padding: 30px 22px 22px; text-align: center; background: #f4fbf6; }
+        #pp-check {
+            width: 62px; height: 62px; margin: 0 auto 14px; border-radius: 50%;
+            background: #1a9e5c; color: #fff; font-size: 34px; line-height: 62px; font-weight: 700;
+            box-shadow: 0 0 0 8px rgba(26, 158, 92, 0.16);
+            animation: ppPop 0.35s cubic-bezier(0.2, 1.4, 0.4, 1);
+        }
+        @keyframes ppPop { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        #pp-success-title { font-size: 20px; font-weight: 800; color: #147a45; margin-bottom: 6px; }
+        #pp-success-sub { font-size: 12px; color: #4a6a58; line-height: 1.5; max-width: 300px; margin: 0 auto 16px; }
+        #pp-success .pp-receipt {
+            text-align: left; background: #fff; border: 1px solid #cfe8d9; border-radius: 10px;
+            padding: 12px 14px; margin-bottom: 16px;
+        }
+        #pp-success .pp-receipt div { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; }
+        #pp-success .pp-receipt span { color: #6b7a71; }
+        #pp-success .pp-receipt b { color: #001435; text-align: right; max-width: 62%; word-break: break-word; }
+        #pp-done {
+            width: 100%; padding: 13px; border: none; border-radius: 24px; cursor: pointer;
+            background: #1a9e5c; color: #fff; font-size: 15px; font-weight: 700;
+        }
+        #pp-done:hover { background: #147a45; }
+
+        /* Step 4: Sewing mat / pattern / AR styles */
+        #pattern-preview {
+            display: none; margin-top: 10px; border: 1px solid var(--hairline-gold);
+            border-radius: 10px; background: rgba(255,255,255,0.03); padding: 10px; text-align: center;
+        }
+        #pattern-preview.visible { display: block; }
+        #pattern-preview svg { width: 100%; height: auto; }
+        .confirm-btn {
+            width: 100%; margin-top: 8px; padding: 9px; border: 1px solid var(--hairline-gold); border-radius: 9px;
+            background: transparent; color: var(--gold-soft);
+            font-weight: 600; font-size: 11px; cursor: pointer; letter-spacing: 0.18em;
+            text-transform: uppercase; display: none;
+        }
+        .confirm-btn.visible { display: block; }
+        .confirm-btn:hover { background: rgba(212,175,55,0.1); }
+
+        /* ---- Garment pattern search bar (inside FULL MEASUREMENTS) ---- */
+        #pattern-search-wrap { position: relative; margin-top: 4px; }
+        #pattern-search-wrap > label {
+            display: block; font-size: 9px; color: var(--ink-dim);
+            letter-spacing: 0.18em; font-weight: 500; margin-bottom: 4px;
+        }
+        .pattern-search-row { display: flex; gap: 6px; }
+        #pattern-search {
+            flex: 1; min-width: 0; background: rgba(255,255,255,0.04);
+            border: 1px solid var(--hairline-violet); color: var(--ink);
+            padding: 7px 9px; border-radius: 8px; font-size: 12px;
+        }
+        #pattern-search:focus { outline: none; border-color: rgba(212,175,55,0.6); }
+        #pattern-confirm {
+            padding: 7px 14px; border: 1px solid var(--hairline-gold); border-radius: 8px;
+            background: linear-gradient(90deg, var(--gold), #e9d9a4); color: #14101e;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.1em; cursor: pointer;
+            text-transform: uppercase; white-space: nowrap;
+        }
+        #pattern-confirm:hover { box-shadow: 0 4px 16px rgba(212,175,55,0.4); }
+        #pattern-options {
+            display: none; position: absolute; left: 0; right: 0; top: calc(100% - 14px);
+            max-height: 190px; overflow-y: auto; z-index: 40;
+            background: rgba(15, 11, 28, 0.98); border: 1px solid var(--hairline-gold);
+            border-radius: 9px; box-shadow: 0 18px 40px rgba(4,2,10,0.7); padding: 4px;
+        }
+        #pattern-options.open { display: block; }
+        .pattern-opt {
+            padding: 6px 9px; border-radius: 6px; font-size: 11px; color: var(--ink);
+            cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .pattern-opt:hover { background: rgba(212,175,55,0.14); }
+        .pattern-opt.active { color: var(--gold-soft); background: rgba(212,175,55,0.1); }
+        .pattern-opt.empty { color: var(--ink-dim); cursor: default; }
+        #pattern-search-status {
+            font-size: 9px; color: var(--ink-dim); letter-spacing: 0.06em;
+            margin-top: 6px; line-height: 1.4;
+        }
+        /* Preview: transparent outlines on the panel, never a dark box */
+        #pattern-preview { background: transparent; }
+        #pattern-preview svg { background: transparent; }
+
+        /* Smart Glasses AR Camera Mode — dedicated full-screen webcam feed */
+        #ar-view {
+            position: fixed; inset: 0; z-index: 30; display: none;
+            background: #08060e;
+        }
+        #ar-view.active { display: block; }
+        #ar-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        #ar-pattern-layer {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            pointer-events: none; transition: transform 0.08s linear;
+        }
+        /* Outlines only: the SVG has no background, so the camera feed shows through */
+        #ar-pattern-layer svg {
+            width: 78vmin; height: 78vmin; background: transparent;
+            filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.55));
+        }
+        #ar-pattern-layer svg path { fill: none !important; }
+        #ar-hud { display: none; }   /* no dark HUD box over the fabric */
+        #ar-exit {
+            position: absolute; top: 18px; right: 18px; padding: 9px 18px;
+            background: var(--glass); color: var(--ink); border: 1px solid var(--hairline-gold); border-radius: 10px;
+            font-weight: 600; cursor: pointer; font-size: 12px; letter-spacing: 0.1em;
+            backdrop-filter: blur(14px);
+        }
+        #ar-calib { display: none; }  /* no bottom caption over the fabric */
+        #ar-prompt {
+            position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 18px; background: rgba(8, 6, 14, 0.88); z-index: 5; text-align: center;
+        }
+        #ar-prompt h2 { font-family: 'Cormorant Garamond', serif; color: var(--gold-soft); font-size: 26px; letter-spacing: 0.14em; font-weight: 600; }
+        #ar-prompt p { color: var(--ink-dim); font-size: 13px; max-width: 420px; line-height: 1.6; }
+        #ar-enable-cam {
+            padding: 13px 34px; border-radius: 30px; border: none; cursor: pointer;
+            background: linear-gradient(90deg, var(--gold), #e9d9a4); color: #14101e;
+            font-weight: 600; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase;
+        }
+
+        /* Bottom-left help pill */
+        #hud-help {
+            position: fixed; bottom: 10px; left: 16px; transform: none;
+            background: var(--glass-soft); border: 1px solid var(--hairline-violet);
+            backdrop-filter: blur(14px);
+            padding: 5px 12px; border-radius: 16px; font-size: 10px; letter-spacing: 0.06em; color: var(--ink-dim);
+            z-index: 10; opacity: 1; transition: opacity 0.8s ease;
+            pointer-events: none; white-space: nowrap;
+        }
+        #hud-help.faded { opacity: 0; }
+
+        /* ---- CSS3D Collection & Stylist Showcase (real HTML/CSS cards, 100% crisp) ---- */
+        /* The overlay sits ABOVE the WebGL canvas (z-index 2 vs 1) but must stay
+           transparent and click-inert so it NEVER covers/hides the 3D scene. */
+        .css3d-root {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 2; background: transparent !important; pointer-events: none;
+        }
+        .css3d-root > * { pointer-events: none; }                /* camera/wrapper divs */
+        .css3d-root .bc-card,
+        .css3d-root .bc-card button,
+        .css3d-root .bc-paypal-row button,
+        .css3d-root .holo-panel,
+        .css3d-root .holo-panel input,
+        .css3d-root .holo-panel select,
+        .css3d-root .holo-panel textarea,
+        .css3d-root .holo-panel button { pointer-events: auto; } /* cards & controls only */
+        .board-cards-wrapper {
+            background: rgba(15, 11, 28, 0.82);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid var(--hairline-gold);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 30px 70px rgba(4, 2, 10, 0.7), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        .board-cards-header {
+            color: var(--gold-soft); font-family: 'Cormorant Garamond', serif; font-weight: 600;
+            font-size: 17px; letter-spacing: 0.16em; text-align: center;
+            margin-bottom: 14px; padding-bottom: 10px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        .board-cards-row { display: flex; gap: 12px; justify-content: center; }
+        .bc-card {
+            width: 210px; background: rgba(255,255,255,0.03); border: 1px solid var(--hairline-violet);
+            border-radius: 12px; overflow: hidden; position: relative; cursor: pointer;
+            box-shadow: 0 10px 30px rgba(4,2,10,0.55);
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .bc-card:hover { border-color: rgba(212,175,55,0.45); }
+        .bc-card.selected { border-color: var(--gold); box-shadow: 0 0 24px rgba(212,175,55,0.3); }
+        .bc-photo { position: relative; height: 190px; background: #171128; }
+        .bc-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .bc-badge {
+            position: absolute; top: 8px; left: 8px; z-index: 2;
+            background: rgba(15, 11, 28, 0.85); color: var(--gold-soft); border: 1px solid var(--hairline-gold);
+            font-size: 8px; font-weight: 600; letter-spacing: 0.16em;
+            padding: 3px 8px; border-radius: 10px; text-transform: uppercase;
+        }
+        .bc-body { padding: 9px 11px 10px; }
+        .bc-title { color: var(--ink); font-weight: 500; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .bc-swatches { display: flex; gap: 5px; margin-top: 5px; }
+        .bc-swatch { width: 11px; height: 11px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.35); }
+        .bc-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+        .bc-price {
+            color: #f5c84c; font-style: italic; font-weight: 700; font-size: 15px;
+            text-shadow: 0 0 10px rgba(245, 200, 76, 0.35);
+        }
+        .bc-price .cur { font-style: italic; margin-right: 1px; }
+        .bc-more { font-size: 8px; color: var(--ink-dim); background: rgba(255,255,255,0.05); border: 1px solid var(--hairline-violet); padding: 2px 8px; border-radius: 9px; letter-spacing: 0.1em; }
+        .bc-actions { display: flex; flex-direction: column; gap: 4px; padding: 0 10px 10px; }
+        .bc-actions button { padding: 6px 4px; border-radius: 7px; font-size: 10px; font-weight: 600; cursor: pointer; position: relative; border: 1px solid var(--hairline-violet); background: rgba(255,255,255,0.04); color: var(--ink); }
+        .bc-actions button::after {
+            content: attr(data-tip); position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+            background: var(--glass); border: 1px solid var(--hairline-gold); color: var(--ink); font-size: 9px;
+            padding: 5px 9px; border-radius: 7px; width: max-content; max-width: 210px; text-align: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 30;
+        }
+        .bc-actions button:hover::after { opacity: 1; }
+        .bc-fit { border-color: rgba(212,175,55,0.4) !important; color: var(--gold-soft) !important; }
+        .bc-match { border-color: rgba(212,175,55,0.4) !important; color: var(--gold-soft) !important; }
+        .bc-sew { border-color: rgba(212,175,55,0.4) !important; color: var(--gold-soft) !important; }
+        .board-cards-empty {
+            color: var(--ink-dim); font-weight: 300; font-size: 15px; letter-spacing: 0.22em; text-transform: uppercase;
+            text-align: center; padding: 120px 40px;
+        }
+        .bc-paypal-row { display: flex; gap: 14px; justify-content: center; margin-top: 22px; padding-bottom: 4px; }
+        .bc-paypal-row .btn-paypal, .bc-paypal-row .btn-paylater { padding: 11px 30px; font-size: 13px; border-radius: 24px; }
+
+        /* ---- Mannequin finish toggle pill (inside the 3D left panel) ---- */
+        .finish-toggle {
+            display: flex; gap: 0; margin: 10px 0 4px; border: 1px solid var(--hairline-gold);
+            border-radius: 20px; overflow: hidden; width: max-content;
+        }
+        .finish-toggle button {
+            padding: 6px 14px; border: none; background: transparent; color: var(--ink-dim);
+            font-size: 10px; font-weight: 600; letter-spacing: 0.12em; cursor: pointer; text-transform: uppercase;
+            transition: background .2s, color .2s;
+        }
+        .finish-toggle button.active { background: rgba(212,175,55,0.16); color: var(--gold-soft); }
+        .finish-label { font-size: 9px; letter-spacing: 0.2em; color: var(--ink-dim); text-transform: uppercase; margin-bottom: 4px; }
+
+        /* ---- Virtual Try-On composite preview + Before/After toggle ---- */
+        #tryon-wrap { position: relative; width: 100%; }
+        #tryon-canvas { width: 100%; height: auto; display: block; border-radius: 8px; }
+        #tryon-toggle {
+            display: flex; gap: 0; margin-top: 8px; border: 1px solid var(--hairline-violet);
+            border-radius: 18px; overflow: hidden; width: max-content;
+        }
+        #tryon-toggle button {
+            padding: 5px 14px; border: none; background: transparent; color: var(--ink-dim);
+            font-size: 10px; font-weight: 600; letter-spacing: 0.1em; cursor: pointer; text-transform: uppercase;
+        }
+        #tryon-toggle button.active { background: rgba(212,175,55,0.16); color: var(--gold-soft); }
+        #apply-fit-btn {
+            width: 100%; margin-top: 10px; padding: 10px; border: 1px solid var(--hairline-gold);
+            border-radius: 9px; background: linear-gradient(90deg, var(--gold), #e9d9a4);
+            color: #14101e; font-weight: 600; font-size: 11px; letter-spacing: 0.14em;
+            text-transform: uppercase; cursor: pointer;
+        }
+        .fit-progress { color: var(--gold-soft); font-size: 12px; margin-top: 8px; }
+
+        /* ---- 3D Holographic Glass Panels (CSS3DRenderer, inside the studio) ---- */
+        .holo-panel {
+            width: 340px;
+            background: linear-gradient(160deg, rgba(20, 14, 34, 0.92), rgba(12, 8, 24, 0.86));
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            border: 1px solid rgba(212, 175, 55, 0.45);
+            border-radius: 18px;
+            box-shadow: 0 0 34px rgba(109, 40, 217, 0.28), 0 26px 70px rgba(4, 2, 10, 0.75),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 0 44px rgba(122, 43, 255, 0.10);
+            padding: 14px 16px 16px;
+            color: var(--ink);
+        }
+        .holo-header {
+            cursor: pointer; user-select: none;
+            font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 600;
+            letter-spacing: 0.3em; color: var(--gold-soft);
+            text-shadow: 0 0 14px rgba(245, 200, 76, 0.45);
+            padding: 4px 0 10px; margin-bottom: 10px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.35);
+        }
+        .holo-header:hover { color: #ffe9a8; }
+        /* Repositioned panels live inside the 3D room — no more fixed screen placement */
+        .holo-panel #left-panel, .holo-panel #right-panel, .holo-panel #sketcher-panel {
+            position: static; width: auto; max-height: none; overflow: visible;
+            background: transparent; border: none; box-shadow: none; backdrop-filter: none;
+            padding: 0; margin: 0;
+        }
+        .holo-panel #sketcher-panel { margin-top: 14px !important; }
+
+        /* ================================================================
+           CENTRAL BOARD — TWO-COLUMN EVENT LOOKBOOK (production styles)
+           Deep dark indigo/black (#0c081c) · dark purple cards · buttons
+           stacked strictly BELOW each image (never overlaid)
+           ================================================================ */
+        .board-lookbook {
+            display: flex;
+            width: 100%;
+            gap: 18px;
+            align-items: stretch;
+        }
+        .board-col {
+            flex: 1 1 50%;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;   /* upper = image, lower = buttons */
+            background: linear-gradient(160deg, rgba(30, 20, 52, 0.85), rgba(12, 8, 28, 0.92));
+            border: 1px solid rgba(109, 40, 217, 0.35);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 14px 40px rgba(4, 2, 10, 0.65);
+        }
+        .board-col-media {
+            position: relative;
+            height: 320px;
+            background: #0c081c;
+            overflow: hidden;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.28);
+        }
+        .board-col-media img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;        /* fills the frame with zero distortion gaps */
+            object-position: center 20%;
+            transition: transform 0.45s ease, filter 0.45s ease;
+        }
+        .board-col:hover .board-col-media img { transform: scale(1.045); filter: brightness(1.08); }
+        .board-col-tag {
+            position: absolute; top: 10px; left: 10px; z-index: 2;
+            background: rgba(12, 8, 28, 0.85); color: var(--gold-soft);
+            border: 1px solid var(--hairline-gold); border-radius: 10px;
+            font-size: 9px; font-weight: 600; letter-spacing: 0.18em;
+            padding: 4px 10px; text-transform: uppercase;
+        }
+        .board-btn-stack {
+            display: flex;
+            flex-direction: column;   /* 3 buttons stacked vertically UNDER the image */
+            gap: 8px;
+            padding: 12px 12px 14px;
+            background: rgba(12, 8, 28, 0.55);
+        }
+        .board-btn-stack button {
+            width: 100%;
+            padding: 11px 10px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            font-family: 'Jost', 'Segoe UI', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+        }
+        /* PayPal — signature blue */
+        .board-btn-paypal {
+            background: linear-gradient(90deg, #0070ba, #009cde);
+            color: #ffffff;
+        }
+        .board-btn-paypal:hover {
+            background: linear-gradient(90deg, #005f9e, #0087c9);
+            box-shadow: 0 6px 20px rgba(0, 112, 186, 0.45);
+            transform: translateY(-1px);
+        }
+        /* Virtual Fitting Room — rich royal purple */
+        .board-btn-fitting {
+            background: linear-gradient(90deg, #6d28d9, #8b5cf6);
+            color: #ffffff;
+        }
+        .board-btn-fitting:hover {
+            background: linear-gradient(90deg, #5b21b6, #7c3aed);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.45);
+            transform: translateY(-1px);
+        }
+        /* Outfit Match checker — golden / amber highlight */
+        .board-btn-match {
+            background: linear-gradient(90deg, #d4af37, #f0d482);
+            color: #14101e;
+        }
+        .board-btn-match:hover {
+            background: linear-gradient(90deg, #b8952b, #e6c96a);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
+            transform: translateY(-1px);
+        }
+
+        /* ---- Focus Panel / Reset View floating buttons ---- */
+        #reset-view {
+            position: fixed; top: 76px; left: 50%; transform: translateX(-50%);
+            display: none; z-index: 14; width: max-content; padding: 8px 22px;
+        }
+        #reset-view.visible { display: block; }
+
+        /* ---- Focus & Expand mode + Voice control ---- */
+        /* Small [⛶] affordance on the top-right corner of every module */
+        .focus-btn {
+            position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; padding: 0;
+            display: flex; align-items: center; justify-content: center; line-height: 1;
+            font-size: 13px; border-radius: 7px; cursor: pointer; z-index: 3;
+            color: var(--gold-soft); background: rgba(255,255,255,0.045);
+            border: 1px solid var(--hairline-gold); margin: 0;
+            opacity: 0.75; transition: opacity .2s, background .2s, box-shadow .2s;
+        }
+        .focus-btn:hover { opacity: 1; background: rgba(212,175,55,0.16); box-shadow: 0 0 14px rgba(212,175,55,0.35); }
+        #left-panel, #right-panel, #sketcher-panel { position: absolute; }
+
+        #focus-toggle, #focus-cutting, #voice-toggle, #voice-hint {
+            transition: opacity .35s ease, transform .35s ease, visibility .35s;
+        }
+        #focus-toggle {
+            position: fixed; top: 72px; right: 20px; z-index: 16;
+            width: 38px; height: 38px; padding: 0; border-radius: 10px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;
+            color: var(--gold-soft); background: var(--glass); border: 1px solid var(--hairline-gold);
+            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+        }
+        #focus-toggle:hover { box-shadow: 0 6px 22px rgba(212,175,55,0.35); }
+        #focus-cutting {
+            position: fixed; bottom: 62px; right: 20px; z-index: 16;
+            width: auto; max-width: 240px; padding: 9px 16px; margin: 0;
+            font-size: 11px; letter-spacing: 0.08em; border-radius: 20px;
+            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+        }
+        #voice-toggle {
+            position: fixed; bottom: 10px; right: 16px; z-index: 16;
+            padding: 7px 14px; border-radius: 18px; cursor: pointer; font-size: 11px;
+            letter-spacing: 0.1em; color: var(--ink-dim); background: var(--glass-soft);
+            border: 1px solid var(--hairline-violet); backdrop-filter: blur(14px);
+        }
+        #voice-toggle.listening {
+            color: #14101e; background: linear-gradient(90deg, var(--gold), #e9d9a4);
+            border-color: var(--gold); animation: pulse 1.6s infinite;
+        }
+        #voice-hint {
+            position: fixed; bottom: 50px; right: 16px; z-index: 16; max-width: 300px;
+            font-size: 11px; line-height: 1.4; text-align: right; color: var(--gold-soft);
+            background: var(--glass); border: 1px solid var(--hairline-gold); border-radius: 10px;
+            padding: 8px 12px; opacity: 0; visibility: hidden; pointer-events: none;
+            backdrop-filter: blur(14px); transform: translateY(6px);
+        }
+        #voice-hint.show { opacity: 1; visibility: visible; transform: translateY(0); }
+
+        /* Panels fade/slide away instead of being torn out of the DOM, so the 3D
+           WebGL render loop and the CSS3D layers keep running untouched. */
+        body.focus-mode #left-panel,
+        body.focus-mode #right-panel,
+        body.focus-mode #sketcher-panel,
+        body.focus-mode #board-actions,
+        body.focus-mode #back-to-avatars,
+        body.focus-mode #paypal-bar,
+        body.focus-mode #hud-help,
+        body.focus-mode #reset-view,
+        body.focus-mode #card-tip,
+        body.focus-mode #focus-cutting {
+            opacity: 0 !important; visibility: hidden !important; pointer-events: none !important;
+        }
+        body.focus-mode #left-panel { transform: translateX(-28px) !important; }
+        body.focus-mode #right-panel,
+        body.focus-mode #sketcher-panel { transform: translateX(28px) !important; }
+        body.focus-mode #board-actions { transform: translate(-50%, 18px) !important; }
+        body.focus-mode #studio-header { opacity: 0 !important; }
+        /* The [⤢] toggle stays on screen in focus mode so clicking it restores the
+           panels again; the voice mic button lingers at 35% opacity. */
+        body.focus-mode #voice-toggle { opacity: 0.35; }
+        body.focus-mode #voice-toggle:hover { opacity: 1; }
+        #left-panel, #right-panel, #sketcher-panel,
+        #board-actions, #back-to-avatars, #paypal-bar, #hud-help,
+        #studio-header, #focus-cutting {
+            transition: opacity .4s ease, transform .4s ease, visibility .4s;
+        }
+        /* Maximized pattern: the AR overlay-style dotted pattern fills the view */
+        #focus-stage {
+            position: fixed; top: 60px; left: 0; right: 0; bottom: 20px; z-index: 9;
+            display: flex; align-items: center; justify-content: center;pointer-events: none;
+            opacity: 0; visibility: hidden; transform: scale(0.92);
+            transition: opacity .45s ease, transform .45s ease, visibility .45s;
+        }
+        #focus-stage.active { opacity: 1; visibility: visible; transform: scale(1); }
+        #focus-stage svg { width: 86vmin; height: 86vmin; background: transparent; filter: drop-shadow(0 0 6px rgba(0,0,0,0.6)); }
+        #focus-stage svg path { fill: none !important; }
+        body.focus-mode #focus-toggle { box-shadow: 0 0 22px rgba(212,175,55,0.55); border-color: var(--gold); }
+        /* Single-module focus (profile / stylist / sketcher / cutting board) */
+        body.module-focus #studio-header { opacity: 0 !important; }
+        body.module-focus #left-panel, body.module-focus #right-panel, body.module-focus #sketcher-panel {
+            opacity: 0 !important; visibility: hidden !important; pointer-events: none !important;
+        }
+        body.module-focus #board-actions, body.module-focus #back-to-avatars,
+        body.module-focus #paypal-bar, body.module-focus #hud-help, body.module-focus #card-tip {
+            opacity: 0 !important; visibility: hidden !important; pointer-events: none !important;
+        }
+        body.module-focus #left-panel.focus-panel-active,
+        body.module-focus #right-panel.focus-panel-active,
+        body.module-focus #sketcher-panel.focus-panel-active {
+            opacity: 1 !important; visibility: visible !important; pointer-events: auto !important;
+            transition: box-shadow .4s ease, border-color .4s ease, transform .4s ease !important;
+        }
+        body.module-focus #left-panel.focus-panel-active {
+            left: 50%; right: auto; width: min(560px, 92vw); margin-left: calc(min(560px, 92vw) / -2);
+            max-height: calc(100vh - 120px); transform: none !important;
+            z-index: 17; background: var(--glass);
+            box-shadow: 0 0 60px rgba(212,175,55,0.3), 0 24px 60px rgba(4,2,10,0.75);
+        }
+        body.module-focus #right-panel.focus-panel-active,
+        body.module-focus #sketcher-panel.focus-panel-active {
+            left: 50%; right: auto; width: min(620px, 92vw); margin-left: calc(min(620px, 92vw) / -2);
+            margin-top: 0 !important; transform: none !important;
+            max-height: calc(100vh - 120px); z-index: 17; overflow-y: auto;
+            background: var(--glass);
+            box-shadow: 0 0 60px rgba(150,110,255,0.32), 0 24px 60px rgba(4,2,10,0.75);
+        }
+        body.module-focus #right-panel.focus-panel-active { top: 72px; }
+        body.module-focus #sketcher-panel.focus-panel-active { top: 72px; }
+    </style>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+    </script>
+</head>
+<body>
+
+    <!-- Splash overlay: hidden automatically by CSS animation + main.js -->
+    <div id="overlay">
+        <h1>FASHIONBUY</h1>
+        <p>HAUTE COUTURE · AI ATELIER</p>
+    </div>
+
+    <!-- Left panel: profile & measurements -->
+    <div id="left-panel">
+        <button class="focus-btn" data-focus-target="profile" title="Focus / Expand profile" aria-label="Focus or expand the profile panel">⛶</button>
+        <h3>AI Styling Profile</h3>
+        <div class="row">
+            <div class="field"><label>HEIGHT (cm)</label><input type="number" id="height" value="175"></div>
+            <div class="field"><label>WEIGHT (kg)</label><input type="number" id="weight" value="68"></div>
+        </div>
+        <div class="row">
+            <div class="field"><label>SKIN TONE</label>
+                <select id="skin"><option>Olive</option><option>Fair</option><option>Tan</option><option>Dark</option></select>
+            </div>
+            <div class="field"><label>SEASON</label>
+                <select id="season"><option>Winter</option><option>Spring</option><option>Summer</option><option>Autumn</option></select>
+            </div>
+        </div>
+        <div class="row">
+            <div class="field"><label>SIZE</label>
+                <select id="size"><option>M — Standard</option><option>XS</option><option>S</option><option>L</option><option>XL</option><option>XXL</option></select>
+            </div>
+            <div class="field"><label>EVENT / OCCASION</label>
+                <select id="event-occasion" data-board-event="1">
+                    <option>Gala Evening</option><option>Business Meeting</option>
+                    <option>Casual Day Out</option><option>Wedding Guest</option>
+                    <option>Date Night</option><option>Red Carpet</option>
+                </select>
+            </div>
+        </div>
+        <div class="finish-label">Mannequin Finish</div>
+        <div class="finish-toggle" id="finish-toggle">
+            <button data-finish="obsidian" class="active">Obsidian Black</button>
+            <button data-finish="purple">Royal Velvet Purple</button>
+        </div>
+
+        <div class="row">
+            <div class="field"><label>GENDER</label>
+                <select id="gender"><option value="male">Male</option><option value="female">Female</option></select>
+            </div>
+            <div class="field"><label>BRAND</label>
+                <select id="brand">
+                    <option value="" selected disabled>Select a Brand...</option>
+                    <option>AURELIA VOGUE</option>
+                    <option>VELOURA NOIR</option>
+                    <option>KAIROS ATELIER</option>
+                    <option>ZENTRA COUTURE</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Generated dotted cutting pattern (parametric SVG) -->
+        <div id="pattern-preview">
+            <h3>Dotted Cutting Pattern</h3>
+            <div id="pattern-svg-holder"></div>
+        </div>
+
+        <div class="upload-box" id="upload-area">
+            📸 UPLOAD YOUR PHOTO (VIRTUAL FITTING ROOM)
+            <input type="file" id="photo-input" hidden accept="image/*">
+        </div>
+
+        <!-- Virtual Fitting Room Mirror: try-on composite + AI critique result -->
+        <div id="mirror-card" style="display:none; margin-top:10px; border:1px solid rgba(212,175,55,0.25); border-radius:12px; padding:12px; background:rgba(255,255,255,0.03);">
+            <h3>Virtual Fitting Room Mirror</h3>
+            <div style="border:1px solid rgba(109,40,217,0.28); border-radius:10px; overflow:hidden; background:transparent; min-height:120px; display:flex; align-items:center; justify-content:center;">
+                <span id="mirror-placeholder" style="color:#6f6690; font-size:11px; padding:20px;">Your photo appears here instantly after upload</span>
+                <div id="tryon-wrap" style="display:none;">
+                    <canvas id="tryon-canvas"></canvas>
+                    <div id="tryon-toggle">
+                        <button data-mode="before" class="active">Before</button>
+                        <button data-mode="after">After Outfit</button>
+                    </div>
+                </div>
+            </div>
+            <button id="apply-fit-btn">✨ Apply Outfit &amp; Analyze Fit</button>
+            <div id="ai-critique" style="margin-top:8px; font-size:12px; line-height:1.5; color:#cfc9e2;"></div>
+        </div>
+        <div id="ai-verdict" style="margin-top:8px; font-size:12px; color:var(--gold-soft);"></div>
+    </div>
+
+    <!-- Top studio header bar -->
+    <div id="studio-header">
+        <div class="hb-left">
+            <div class="hb-diamond"></div>
+            <div class="hb-stack">
+                <span class="hb-title">FashionBuy</span>
+                <span class="hb-sub">YOUR STYLE, YOUR FIT WITH AI</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right panel: Private AI Stylist -->
+    <div id="right-panel">
+        <button class="focus-btn" data-focus-target="stylist" title="Focus / Expand stylist" aria-label="Focus or expand the AI stylist panel">⛶</button>
+        <div id="measurements-box" style="border: 1px solid rgba(212,175,55,0.22); padding: 12px; border-radius: 12px; margin-bottom: 12px; background: rgba(255,255,255,0.03);">
+            <h3>Full Measurements (cm)</h3>
+            <div class="row">
+                <div class="field"><label>SHOULDER (cm)</label><input type="number" id="m-shoulder" value="42" min="20" max="70"></div>
+                <div class="field"><label>CHEST (cm)</label><input type="number" id="m-chest" value="92" min="50" max="180"></div>
+            </div>
+            <div class="row">
+                <div class="field"><label>WAIST (cm)</label><input type="number" id="m-waist" value="74" min="40" max="160"></div>
+                <div class="field"><label>HIPS (cm)</label><input type="number" id="m-hips" value="96" min="50" max="180"></div>
+            </div>
+            <div class="row">
+                <div class="field"><label>SLEEVE (cm)</label><input type="number" id="m-sleeve" value="60" min="20" max="100"></div>
+                <div></div>
+            </div>
+            <div id="pattern-search-wrap">
+                <label for="pattern-search">GARMENT PATTERN (30)</label>
+                <div class="pattern-search-row">
+                    <input type="text" id="pattern-search" autocomplete="off" placeholder="Search patterns — shirt, tux, skirt…">
+                    <button type="button" id="pattern-confirm">Confirm</button>
+                </div>
+                <div id="pattern-options"></div>
+                <div id="pattern-search-status">Classic Button-Down Shirt selected — press Confirm to draft</div>
+            </div>
+            <div id="pattern-preview"><div id="pattern-svg-holder"></div></div>
+            <button class="confirm-btn" id="btn-confirm-measurements">✓ Confirm Measurements</button>
+        </div>
+        <h3>Private AI Stylist</h3>
+        <div class="chat-box" id="chat-log">AI: Tell me where you're going so I can suggest an outfit!</div>
+        <div class="chat-row">
+            <input type="text" id="chat-input" placeholder="e.g., I want a white dress from Zara...">
+            <button id="chat-send">🔍 Search &amp; Suggest</button>
+        </div>
+    </div>
+
+    <!-- My Design Sketcher: dedicated co-creation panel below Private AI Stylist -->
+    <div id="sketcher-panel">
+        <button class="focus-btn" data-focus-target="sketcher" title="Focus / Expand sketcher" aria-label="Focus or expand the design sketcher panel">⛶</button>
+        <h3>✏️ My Design Sketcher</h3>
+        <div id="sketcher-badge">
+            <span class="live-dot"></span><span id="sb-h">HEIGHT —</span><span id="sb-w">WEIGHT —</span>
+            <span id="sb-skin">SKIN —</span><span id="sb-season">SEASON —</span><span id="sb-gender">GENDER —</span>
+        </div>
+        <textarea id="sketcher-prompt" placeholder="Describe outfit idea, e.g., White dress with colorful stones..."></textarea>
+        <button id="sketcher-generate">✨ Create Design</button>
+        <div id="sketcher-result"></div>
+        <div id="sketcher-actions">
+            <button id="sk-btn-mat">🧵 Send to Sewing Mat</button>
+            <button id="sk-btn-photo">🪞 Try on My Photo</button>
+            <button id="sk-btn-mannequin">👗 Put on 3D Mannequin</button>
+        </div>
+    </div>
+
+    <!-- Action buttons: live exclusively on the showcase panel (shown when a card is selected) -->
+    <div id="board-actions">
+        <button class="btn btn-purple tip-btn" id="btn-fitting" data-tip="Upload your photo for AI try-on &amp; fit this outfit onto the 3D avatar.">Go to Virtual Fitting Room</button>
+        <button class="btn btn-gold tip-btn" id="btn-match" data-tip="Calculate your AI % compatibility score based on Height, Weight, Skin Tone &amp; Season.">Check My Outfit Match (%)</button>
+        <button class="btn btn-gold tip-btn" id="btn-sewing" data-tip="Project the dotted sewing pattern &amp; open Smart Glasses AR Camera Mode.">🧵 Sewing Pattern &amp; AR Glasses</button>
+    </div>
+    <button class="btn btn-purple tip-btn" id="back-to-avatars" data-tip="Return to the avatar duo">← Back to Avatars</button>
+    <button class="btn btn-gold" id="reset-view">⟲ Reset View</button>
+
+    <!-- Focus / Expand mode: maximizes the dotted pattern & hides surrounding UI -->
+    <button id="focus-toggle" title="Focus / Expand (hide all panels & maximize the pattern)" aria-pressed="false">[⛶]</button>
+    <button id="focus-cutting" class="btn btn-gold" data-focus-target="cutting" title="Focus / expand the cutting board &amp; sewing pattern">⛶ Focus / Expand Cutting Board</button>
+    <button id="voice-toggle" title="Voice control (microphone)" aria-pressed="false">🎙 Voice</button>
+    <div id="voice-hint" aria-live="polite"></div>
+    <div id="card-tip"></div>
+
+    <!-- PayPal buttons: hidden until an outfit is fitted -->
+    <div id="paypal-bar">
+        <button class="btn btn-paypal" id="btn-paypal">Pay with PayPal</button>
+        <button class="btn btn-paylater" id="btn-paylater">Pay Later</button>
+    </div>
+
+    <div id="hud-help">WASD / Arrows: Walk inside 3D Room | Mouse Drag: Rotate (±45°) | Click the sewing mat for the pattern</div>
+
+    <!-- Focus / Expand stage: the transparent dotted pattern maximized over the 3D room -->
+    <div id="focus-stage"><div id="focus-pattern-holder"></div></div>
+
+    <!-- Step 4: Smart Glasses AR Camera Mode (webcam passthrough + dotted pattern overlay) -->
+    <div id="ar-view">
+        <video id="ar-video" autoplay playsinline muted></video>
+        <div id="ar-pattern-layer"></div>
+        <button id="ar-exit">✕ Exit AR</button>
+        <div id="ar-prompt">
+            <h2>Smart Glasses AR Camera Mode</h2>
+            <p>FashionBuy needs camera access to project the dotted sewing pattern onto your real fabric and table surface. Your video never leaves this device.</p>
+            <button id="ar-enable-cam">Enable Camera</button>
+        </div>
+    </div>
+
+    <!-- Fallback error catcher: runs as a classic script BEFORE the module, so even a
+         failed module import (e.g. lib/three.module.js load error) is shown on-screen. -->
+    <script>
+    (function () {
+      function showBanner(msg) {
+        var b = document.getElementById('__fatal_error_banner');
+        if (!b) {
+          b = document.createElement('div');
+          b.id = '__fatal_error_banner';
+          b.style.cssText = 'position:fixed;top:45%;left:50%;transform:translate(-50%,-50%);z-index:99999;' +
+            'background:#8b0000;color:#fff;font:14px/1.5 monospace;padding:16px 24px;border:2px solid #ff4d4d;' +
+            'border-radius:8px;max-width:80vw;white-space:pre-wrap;word-break:break-word;overflow:auto;max-height:50vh;';
+          document.body.appendChild(b);
+        }
+        b.textContent += (b.textContent ? '\n' : '') + msg;
+      }
+      window.addEventListener('error', function (e) {
+        if (!e.filename) return;                          // ignore harmless resource load errors (no file/line)
+        if (e.target && e.target.tagName === 'SCRIPT' && e.target.src) {
+          showBanner('SCRIPT LOAD FAILED: ' + e.target.src);
+          return;
+        }
+        showBanner('ERROR: ' + (e.message || 'unknown') + ' @ line ' + (e.lineno != null ? e.lineno : '?'));
+      }, true); // capture phase so <script src> network failures are caught
+      window.addEventListener('unhandledrejection', function (e) {
+        var r = e.reason;
+        showBanner('UNHANDLED PROMISE REJECTION: ' + ((r && r.stack) || (r && r.message) || String(r)));
+      });
+    })();
+    </script>
+    <script type="module" src="./main.js"></script>
+</body>
+</html>
